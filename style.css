@@ -1,0 +1,657 @@
+/* Ana Vezmar — portfolio stylesheet.
+   Gallery rules are scoped to main.gallery so the text pages
+   (About, Contact) never inherit the grid. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Fluid scale — one base unit that grows gently with the viewport,
+     so type, spacing and gutters move together from phone to wide
+     monitor instead of jumping at a staircase of breakpoints. The floor
+     sits a touch above the smallest comfortable size so the narrow end
+     has air rather than bottoming out at a cramped minimum. */
+  --fluid: clamp(0.85rem, 0.3rem + 0.9vw, 1.15rem);
+  --cell: clamp(11rem, 16.5vw, 13.5rem);
+
+  /* Motion — one curve for every transition and entrance animation, so
+     the page moves with a single feel rather than a mix of defaults. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* How long a page takes to leave before the browser follows a link.
+     script.js reads this so the exit beat and the wait never drift
+     apart (see the traversal rules further down). */
+  --leave-beat: 0.3s;
+
+  /* Light palette — the default. */
+  --paper: #f7f5f0;
+  --ink: #1c1a17;
+  --muted: #6d6a63;
+  --rule: #dcd7cd;
+  --accent: #9a3b2c;
+  --veil: rgba(14, 13, 12, 0.93);
+  --shadow: 0 1px 3px rgba(28, 26, 23, 0.18);
+  --shadow-hi: 0 6px 16px rgba(28, 26, 23, 0.28);
+  --sel: rgba(154, 59, 44, 0.16);
+  --link-rule: rgba(154, 59, 44, 0.35);
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Dark palette — used when the OS asks for dark and the visitor has
+   not picked a mode with the header toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1a1816;
+    --ink: #f0ece4;
+    --muted: #a09b92;
+    --rule: #3b3833;
+    --accent: #d8785c;
+    --veil: rgba(8, 8, 8, 0.95);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow-hi: 0 6px 16px rgba(0, 0, 0, 0.65);
+    --sel: rgba(216, 120, 92, 0.28);
+    --link-rule: rgba(216, 120, 92, 0.55);
+  }
+}
+
+/* An explicit choice from the toggle beats the OS preference. */
+html[data-theme="dark"] {
+  --paper: #1a1816;
+  --ink: #f0ece4;
+  --muted: #a09b92;
+  --rule: #3b3833;
+  --accent: #d8785c;
+  --veil: rgba(8, 8, 8, 0.95);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-hi: 0 6px 16px rgba(0, 0, 0, 0.65);
+  --sel: rgba(216, 120, 92, 0.28);
+  --link-rule: rgba(216, 120, 92, 0.55);
+}
+
+body {
+  font-family: var(--font-body);
+  max-width: min(46rem, 100vw - 3.5 * var(--fluid));
+  margin: auto;
+  padding: calc(var(--fluid) * 2) calc(var(--fluid) * 1.75);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
+  /* The theme toggle swaps the palette; easing the two colours makes
+     that switch a fade rather than a flash. */
+  transition: color 0.35s var(--ease), background-color 0.35s var(--ease);
+}
+
+::selection {
+  background: var(--sel);
+}
+
+/* The bar is sticky and frosted: it stays put while the grid scrolls
+   beneath it, so the links are always within reach. The opaque paint
+   comes first and is the fallback; the translucent one only applies
+   where backdrop-filter exists (see the @supports block below). */
+header {
+  position: sticky;
+  top: 0px;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--fluid) * 0.75) calc(var(--fluid) * 1.5);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: calc(var(--fluid) * 1.15) 0 calc(var(--fluid) * 1.15);
+  margin: 0 0 calc(var(--fluid) * 1.75);
+  transition: color 0.35s var(--ease), background-color 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+@supports (backdrop-filter: blur(8px)) {
+  header {
+    background: color-mix(in srgb, var(--paper) 86%, transparent);
+    backdrop-filter: blur(14px) saturate(1.15);
+  }
+}
+
+/* Lighter and a touch smaller than it was: the wordmark reads as a
+   label now, not a headline competing with the grid. */
+header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 1.05rem + 1.5vw, 2rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-wrap: balanced;
+  /* Tighter leading: the wordmark is a single line, and the inherited
+     1.6 body leading only pads air above and below it — which is worst
+     on a phone, where the header has to share a short viewport. */
+  line-height: 1.25;
+  margin: 0;
+}
+
+/* The wordmark doubles as the way home — a quiet link that only
+   announces itself when touched, so the bar still reads as one line. */
+header h1 a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.22s ease;
+}
+
+header h1 a:hover,
+header h1 a:focus-visible {
+  color: var(--accent);
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--fluid) * 0.35) calc(var(--fluid) * 1.5);
+  font-size: clamp(0.78rem, 0.66rem + 0.25vw, 0.84rem);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* The links live in a panel so the row can be sized and moved as one
+   unit: inline in the bar on wide screens, dropped to a second row on
+   narrow ones (see the media queries near the bottom). There is no
+   hamburger — the links are always in the page, so they are always
+   reachable, with or without JavaScript. */
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--fluid) * 0.3) calc(var(--fluid) * 1.1);
+}
+
+/* Nav links — muted until touched, then a hairline draws itself
+   underneath rather than swapping in a pre-drawn one. */
+nav a {
+  position: relative;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.22s ease;
+}
+
+/* The tap target, not the paint. The word stays exactly where it was
+   drawn; an invisible box around it grows to roughly 44px tall so a
+   thumb lands on the link instead of the few pixels of gap beside it.
+   It lives on ::before so the hairline on ::after keeps painting over
+   it, and it is grown with negative offsets so it never pushes the
+   row apart. */
+nav a::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--fluid) * -0.35);
+  right: calc(var(--fluid) * -0.35);
+  top: calc(var(--fluid) * -0.55);
+  bottom: calc(var(--fluid) * -0.55);
+}
+
+nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.4em;
+  /* A fixed 1.5px hairline turns into a blurry half pixel once the
+     type scales past it, so the rule thickens with the letters and
+     never drops below one real pixel. */
+  height: max(1px, 0.12em);
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s var(--ease), background-color 0.3s ease;
+}
+
+nav a:hover,
+nav a:focus-visible {
+  color: var(--ink);
+}
+
+nav a:hover::after,
+nav a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+nav a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The page you are on keeps its hairline lit, so the bar says where
+   you are without needing a second colour or a breadcrumb. */
+nav a.current {
+  color: var(--ink);
+}
+
+nav a.current::after {
+  transform: scaleX(1);
+  background: var(--link-rule);
+}
+
+/* Theme toggle — last item in nav, so it keeps the right-hand edge.
+   Its label names the mode the click will switch to. */
+nav button {
+  font-family: inherit;
+  font-size: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: calc(var(--fluid) * 0.38) calc(var(--fluid) * 0.85);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+nav button:hover,
+nav button:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding-top: calc(var(--fluid) * 1.1);
+  font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.82rem);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  transition: color 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+main.gallery {
+  display: grid;
+  /* auto-fill + minmax lets the grid pick its own column count:
+     three tracks on a laptop, four at ~1200px, five at ~1500px, six
+     past ~2500px — and because the measure goes full-bleed on wide
+     screens (see the media query at the bottom), the tracks always
+     reach both edges instead of leaving an orphan row. A cell never
+     squeezes below --cell. Narrow screens pin the count outright
+     (see the media queries at the bottom). */
+  grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr));
+  align-items: start;
+  gap: calc(var(--fluid) * 0.85);
+}
+
+/* Entrance for the cells — rise a little and settle. --i is stamped
+   onto each figure by script.js; the delay lives on the figure itself
+   (see the rule below) so the pace can be capped there. */
+@keyframes work-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--fluid) * 0.7));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Figures carry a 40px UA margin by default, which would push the
+   grid cells apart; min-width: 0 keeps a cell from refusing to shrink. */
+main.gallery figure {
+  margin: 0;
+  min-width: 0;
+  /* Entrance: each cell rises a little and settles, staggered by its
+     position in the grid (--i is stamped onto it by script.js). The
+     delay is capped so a longer grid never waits more than half a
+     second for its last cell. */
+  animation: work-in 0.55s var(--ease) both;
+  animation-delay: calc(min(var(--i, 0), 9) * 55ms);
+}
+
+main.gallery .work-caption {
+  margin: calc(var(--fluid) * 0.5) 0 0;
+  font-family: var(--font-body);
+  font-style: normal;
+  font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.8rem);
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  transition: color 0.25s ease;
+}
+
+main.gallery img {
+  display: block;
+  width: 100%;
+  /* No forced ratio and no cover-crop: the works are 533x800 portrait
+     (and 800x533 for the two landscape ones), so a square box was
+     slicing the top and bottom off every drawing. height: auto keeps
+     the artwork whole at whatever width the track gives it, and the
+     width/height attributes in index.html still reserve the space, so
+     there is no layout shift. */
+  height: auto;
+  /* A pointer, not a magnifier: the click opens the work full size
+     rather than zooming into it, so the cursor should say "this opens"
+     the way the theme button and the nav links already do. */
+  cursor: pointer;
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), filter 0.3s ease;
+}
+
+/* Hover-only polish — gated behind (hover: hover) so touch devices
+   never get a stuck hover state left over from a tap. */
+@media (hover: hover) {
+  main.gallery img:hover {
+    /* A lift rather than a swell: the cell comes off the page (the
+       deeper shadow below does the weight) and barely changes size, so
+       the artwork is never resampled into a blurrier version of itself. */
+    transform: translateY(-3px) scale(1.015);
+    box-shadow: var(--shadow-hi);
+    filter: saturate(1.05) contrast(1.03);
+  }
+}
+
+/* Keyboard focus — the thumbnails are reachable with Tab and openable
+   with Enter/Space (see script.js), so they need a visible focus ring. */
+main.gallery img:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--veil);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The veil lives in the document from the first click onward and is
+     faded rather than added and removed, so closing has something to
+     fade out instead of yanking the plate off the page mid-decode.
+     pointer-events follows the fade, which keeps a closed veil from
+     swallowing the next thumbnail click. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s var(--ease);
+}
+
+.lightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox img {
+  /* Safe-area aware: on notched phones the plate stops short of the
+     cutout instead of sliding under it. */
+  max-width: min(90vw, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: min(88vh, calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  width: auto;
+  height: auto;
+  border-radius: 3px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+  /* The plate arrives a touch small and grows into place with the veil,
+     so opening reads as one move rather than a flash plus a jump. */
+  transform: scale(0.94);
+  transition: transform 0.34s var(--ease);
+}
+
+.lightbox.open img {
+  transform: none;
+}
+
+/* Text pages (About, Contact) */
+
+main:not(.gallery) {
+  max-width: min(33rem, 100vw - 3.5 * var(--fluid));
+}
+
+main:not(.gallery) h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.05rem + 0.6vw, 1.45rem);
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+main:not(.gallery) h2::before {
+  content: "";
+  display: block;
+  width: 2.25rem;
+  height: 2px;
+  background: var(--accent);
+  margin: 0 0 0.65rem;
+}
+
+main:not(.gallery) p {
+  margin: 0 0 1rem;
+}
+
+main a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--link-rule);
+  text-decoration-thickness: 1px;
+  transition: color 0.22s var(--ease), text-decoration-color 0.22s var(--ease);
+}
+
+main a:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+/* Page traversal — the site moves as one gesture between pages.
+   Arriving: the three blocks settle in from below, which is the
+   gallery's stagger read at the page level (the grid itself brings its
+   cells in already, so it is left alone here). Leaving: script.js marks
+   the document and the same blocks lift out upward — the direction they
+   arrived from — so the next page starts from an empty sheet rather
+   than a hard cut. One curve, one direction, both halves. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--fluid) * 0.75));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--fluid) * -0.75));
+  }
+}
+
+header,
+footer,
+main:not(.gallery) {
+  animation: page-in 0.45s var(--ease) both;
+}
+
+main:not(.gallery) {
+  animation-delay: 0.12s;
+}
+
+footer {
+  animation-delay: 0.2s;
+}
+
+/* The exit beat. The delay is reset here because the arrival delays
+   above would otherwise hold the exit open for a tenth of a second. */
+body.leaving header,
+body.leaving main,
+body.leaving footer {
+  animation: page-out var(--leave-beat) var(--ease) both;
+  animation-delay: 0s;
+}
+
+/* Narrow screens: once there are only one or two tracks to choose
+   from, pinning the count beats letting auto-fill guess. */
+@media (max-width: 899px) {
+  main.gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  main.gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Narrow screens: the title keeps its own line and the links drop to a
+   second row — but pinned to the right-hand edge, so the bar still
+   reads title-left / links-right the way it does on wide screens
+   rather than piling everything under the wordmark. */
+@media (max-width: 640px) {
+  header {
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: calc(var(--fluid) * 0.55) calc(var(--fluid) * 1.5);
+  }
+
+  nav {
+    align-self: flex-end;
+  }
+}
+
+/* Short viewports (landscape phones, laptops under browser chrome):
+   trade vertical rhythm for content. */
+@media (max-height: 520px) {
+  body {
+    padding: calc(var(--fluid) * 1.2) calc(var(--fluid) * 1.6);
+  }
+
+  header {
+    padding-bottom: calc(var(--fluid) * 0.8);
+    margin: 0 0 calc(var(--fluid) * 1.1);
+  }
+
+  main.gallery {
+    gap: calc(var(--fluid) * 0.7);
+  }
+}
+
+/* Wide screens: stop capping the measure at 58rem and hand the whole
+   viewport to the grid, so auto-fill keeps adding columns as the
+   window grows and the tracks always touch both edges. --cell grows
+   with it, which is what keeps the thumbnails big rather than merely
+   numerous. Text pages are unaffected — main:not(.gallery) caps its
+   own measure. 100% (not 100vw) so the border box lands exactly on
+   the viewport and can never ask for a horizontal scrollbar. */
+@media (min-width: 1200px) {
+  body {
+    max-width: calc(100% - 3.5 * var(--fluid));
+  }
+
+  :root {
+    --cell: clamp(17rem, 17vw, 24rem);
+  }
+}
+
+/* Touch devices: no stuck hover, roomier tap targets. (The cursor no
+   longer needs an override — thumbnails already ask for a pointer.) */
+@media (hover: none), (pointer: coarse) {
+  main.gallery .work-caption {
+    font-size: 0.8rem;
+  }
+
+  nav button {
+    padding: calc(var(--fluid) * 0.5) calc(var(--fluid) * 0.95);
+  }
+}
+
+/* Narrow screens get their own pass over the header type. The fluid
+   scale bottoms out around here, which is where the bar used to go
+   rough: letters sized for a desktop gutter, tracking tuned for a long
+   line, and tap targets barely taller than the glyphs themselves. So
+   the type goes up, the tracking comes back down (wide tracking eats
+   width on a short line), and the gaps are set from the fluid unit
+   rather than the type — that keeps three links plus the theme button
+   inside a 320px measure without ever colliding. */
+@media (max-width: 640px) {
+  nav {
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    gap: calc(var(--fluid) * 0.5) calc(var(--fluid) * 1.1);
+    /* If the cluster ever does run out of measure, the theme button
+       wraps below — and stays on the right rather than jumping back to
+       the left under the links. */
+    justify-content: flex-end;
+  }
+
+  .nav-links {
+    /* The links stay one row even if the bar itself has to wrap:
+       breaking "About" against "Contact" is what makes a phone header
+       read as a list rather than a bar. */
+    flex-wrap: nowrap;
+    gap: calc(var(--fluid) * 0.45) calc(var(--fluid) * 1.05);
+  }
+
+  nav button {
+    padding: calc(var(--fluid) * 0.6) calc(var(--fluid) * 0.95);
+  }
+
+  nav a::before {
+    /* The hit area does most of its work vertically — the gaps between
+       links are deliberately narrow, so growing sideways would only
+       make neighbours fight over the space between them. */
+    top: calc(var(--fluid) * -1.05);
+    bottom: calc(var(--fluid) * -1.05);
+  }
+}
+
+/* Nothing that only exists to move may keep its starting state here:
+   the cells must be visible without their entrance, and the veil
+   without its zoom (it snaps instead). */
+@media (prefers-reduced-motion: reduce) {
+  nav a,
+  nav a::after,
+  nav button,
+  body,
+  header,
+  footer,
+  main a,
+  main.gallery img,
+  main.gallery .work-caption,
+  .lightbox,
+  .lightbox img {
+    transition: none;
+  }
+
+  main.gallery figure {
+    animation: none;
+  }
+
+  /* The traversal halves must not keep their starting states either:
+     the blocks are simply there, and script.js never marks the
+     document as leaving, so nothing waits for an exit beat. The main
+     selector has to repeat the :not() guard from the arrival rule —
+     dropping it would leave a weaker selector unable to override it. */
+  header,
+  main:not(.gallery),
+  footer {
+    animation: none;
+  }
+
+  main.gallery img:hover {
+    transform: none;
+    filter: none;
+  }
+
+  .lightbox img {
+    transform: none;
+  }
+}
