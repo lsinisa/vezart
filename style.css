@@ -34,6 +34,14 @@
   --sel: rgba(154, 59, 44, 0.16);
   --link-rule: rgba(154, 59, 44, 0.35);
 
+  /* The ring the open lightbox wears. It cannot come from the palette:
+     the veil is near-black in either theme, and the light theme's
+     accent sits under 3:1 against it — a focus indicator has to clear
+     3:1 against what it sits on. One fixed light ink answers both veils
+     at 13:1 or better, and it lives outside the palette blocks because
+     it never changes with them. */
+  --veil-ring: #f0ece4;
+
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -140,6 +148,16 @@ header h1 a {
 header h1 a:hover,
 header h1 a:focus-visible {
   color: var(--accent);
+}
+
+/* The colour change above is not enough on its own: the accent it swaps
+   in sits barely over 2:1 against the ink it replaces, under the 3:1 a
+   focus indicator needs against the unfocused state. So the wordmark
+   takes the same ring the nav links already carry — the hover keeps its
+   quiet colour shift, the keyboard gets a ring. */
+header h1 a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 nav {
@@ -386,6 +404,18 @@ main.gallery img:focus-visible {
   pointer-events: auto;
 }
 
+/* While the plate is open the veil is focusable — script.js gives it
+   tabindex="0" so a keyboard visitor can reach the dialog and close it
+   with Escape — so it needs a visible indicator, and the browser's
+   default would draw one at the viewport edge, against the bezel where
+   nobody is looking. The ring therefore lives on the plate, which is
+   the thing the dialog is showing, and it is offset far enough to clear
+   the plate's own rounding. */
+.lightbox:focus-visible img {
+  outline: 2px solid var(--veil-ring);
+  outline-offset: 3px;
+}
+
 .lightbox img {
   /* Safe-area aware: on notched phones the plate stops short of the
      cutout instead of sliding under it. */
@@ -403,6 +433,13 @@ main.gallery img:focus-visible {
 
 .lightbox.open img {
   transform: none;
+}
+
+/* While the plate is open the page behind the veil is locked, so
+   nothing scrolls under it — the work stays the one thing on the
+   screen. script.js adds and removes this class with the veil. */
+body.lightbox-open {
+  overflow: hidden;
 }
 
 /* Text pages (About, Contact) */
@@ -442,6 +479,15 @@ main a {
 main a:hover {
   color: var(--ink);
   text-decoration-color: var(--ink);
+}
+
+/* Text-page links take the site's ring rather than the browser's, so
+   every focusable thing on every page announces focus the same way.
+   The underline stays as it is — the ring is added beside it, not
+   traded for it, so the link is still recognisable as a link. */
+main a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* Page traversal — the site moves as one gesture between pages.

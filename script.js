@@ -1,6 +1,8 @@
 // Click-to-enlarge lightbox.
 // Clicking a thumbnail opens the full-size image on a dark overlay;
-// clicking the overlay (or pressing Escape) closes it.
+// clicking the overlay (or pressing Escape) closes it. While the plate
+// is open the arrows and horizontal swipes page to the neighbouring
+// work, and the page behind the veil is locked.
 
 // Theme toggle.
 // The site follows the OS colour scheme until the header button is
@@ -59,6 +61,13 @@ document.addEventListener("DOMContentLoaded", function () {
   var veil = null;
   var plate = null;
 
+  // The thumbnail the plate is showing: closing hands focus back to
+  // it, and paging keeps it pointed at the work on the veil.
+  var opener = null;
+
+  // Where a touch swipe across the veil began, if one is in flight.
+  var swipeStart = null;
+
   // Thumbnails live in images/thumbs/, the full plates one level up.
   function fullSource(thumb) {
     var src = thumb.getAttribute("src") || thumb.src;
@@ -72,6 +81,13 @@ document.addEventListener("DOMContentLoaded", function () {
   function closeLightbox() {
     if (!isOpen()) return;
     veil.classList.remove("open");
+    veil.setAttribute("aria-hidden", "true");
+    veil.removeAttribute("tabindex");
+    document.body.classList.remove("lightbox-open");
+    // Focus returns to the thumbnail that opened the plate, so a
+    // visitor closing with Escape is left where they started rather
+    // than at the top of the page.
+    if (opener) opener.focus();
   }
 
   function reveal() {
@@ -87,14 +103,47 @@ document.addEventListener("DOMContentLoaded", function () {
       veil.addEventListener("click", closeLightbox);
       document.body.appendChild(veil);
 
+      // Modal semantics — the veil is a dialog the moment a work
+      // opens it, named by the work's caption, and hidden from
+      // assistive tech while closed.
+      veil.setAttribute("role", "dialog");
+      veil.setAttribute("aria-modal", "true");
+      veil.setAttribute("aria-hidden", "true");
+
       // The listeners live on the plate once, so they fire again when a
       // later viewing points it at a different work.
       plate.addEventListener("load", reveal);
       plate.addEventListener("error", closeLightbox);
+
+      // Touch paging — a horizontal swipe across the veil moves the
+      // plate to the neighbouring work. Only touch pointers count;
+      // clicks stay with the veil's own close handler.
+      veil.addEventListener("pointerdown", function (event) {
+        if (event.pointerType === "touch") swipeStart = event.clientX;
+      });
+      veil.addEventListener("pointercancel", function () {
+        swipeStart = null;
+      });
+      veil.addEventListener("pointerup", function (event) {
+        if (swipeStart === null) return;
+        var dx = event.clientX - swipeStart;
+        swipeStart = null;
+        if (Math.abs(dx) < 40) return;
+        stepPlate(dx > 0 ? 1 : -1);
+      });
     }
 
     plate.alt = thumb.alt;
     plate.src = fullSource(thumb);
+    opener = thumb;
+
+    // The dialog is named by the work's caption, and while open it is
+    // focusable and visible to assistive tech.
+    veil.setAttribute("aria-label",
+      thumb.closest("figure").querySelector("figcaption").textContent);
+    veil.removeAttribute("aria-hidden");
+    veil.setAttribute("tabindex", "0");
+    document.body.classList.add("lightbox-open");
 
     // Carry the thumbnail's intrinsic ratio over to the plate so the
     // browser reserves the right box before the full image decodes.
@@ -126,8 +175,36 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // Paging — the plate moves to the neighbouring work in grid order,
+  // wrapping at the ends.
+  function stepPlate(delta) {
+    var works = document.querySelectorAll("main img");
+    var at = 0;
+    for (var i = 0; i < works.length; i++) {
+      if (works[i] === opener) at = i;
+    }
+    openLightbox(works[(at + delta + works.length) % works.length]);
+  }
+
   document.addEventListener("keydown", function (event) {
-    if (isOpen() && event.key === "Escape") closeLightbox();
+    if (!isOpen()) return;
+
+    if (event.key === "Escape") {
+      closeLightbox();
+      return;
+    }
+
+    // Space would scroll the page under the veil; while the plate is
+    // open the gallery must not move.
+    if (event.key === " ") {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      stepPlate(event.key === "ArrowLeft" ? -1 : 1);
+    }
   });
 });
 

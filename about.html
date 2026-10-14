@@ -8,6 +8,16 @@
   <meta name="description" content="About Ana Vezmar.">
   <title>About — Ana Vezmar</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231c1a17'/%3E%3Crect x='8' y='8' width='16' height='16' fill='%23f7f5f0'/%3E%3C/svg%3E">
+  <script>
+  /* Set the theme before first paint so a stored choice cannot flash
+     the wrong palette; script.js repeats this later for the toggle. */
+  try {
+    var t = localStorage.getItem("theme");
+    if (t !== "dark" && t !== "light")
+      t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
