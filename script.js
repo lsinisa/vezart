@@ -7,7 +7,13 @@
 // Theme toggle.
 // The site follows the OS colour scheme until the header button is
 // clicked; after that the choice is remembered for the rest of the visit.
-document.addEventListener("DOMContentLoaded", function () {
+//
+// The script is deferred, so it runs the moment the document is parsed and
+// the button is already in hand; DOMContentLoaded, on the other hand, is
+// only delivered after every deferred script has run. Waiting for it would
+// let the button keep the label its markup guesses with for the first
+// frame, so the label is set the moment the script runs.
+(function () {
   var root = document.documentElement;
   var button = document.getElementById("theme-toggle");
   var media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -26,9 +32,27 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (e) {}
   }
 
+  // The mobile browser bar paints itself from the theme-color tags, which
+  // only know what the stylesheet prefers when the page loads. Both of
+  // them (the plain one and the one gated on the OS scheme) are retold
+  // with every applied theme, so the bar follows the visitor's choice
+  // rather than the system. The colour is read back from the stylesheet
+  // so it cannot drift from the page behind it.
+  var paints = document.querySelectorAll('meta[name="theme-color"]');
+
+  function paint() {
+    if (!paints.length) return;
+    var paper = getComputedStyle(root).getPropertyValue("--paper").trim();
+    if (!paper) return;
+    paints.forEach(function (tag) {
+      tag.setAttribute("content", paper);
+    });
+  }
+
   function apply(choice) {
     theme = choice;
     root.dataset.theme = choice;
+    paint();
     if (!button) return;
     var next = choice === "dark" ? "light" : "dark";
     button.textContent = next === "dark" ? "Dark" : "Light";
@@ -36,6 +60,22 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   var theme = stored() || (media.matches ? "dark" : "light");
+
+  // The stylesheet eases the two page colours so a mid-visit toggle reads
+  // as a fade; on arrival that same easing would fade the page in from
+  // the palette it does not want. The transition is held off across the
+  // first frame — the theme is set inside that frame, so it snaps — and
+  // handed back once the frame has painted, which leaves the toggle's
+  // own fades working for the rest of the visit.
+  if (document.body) {
+    document.body.style.transition = "none";
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        document.body.style.removeProperty("transition");
+      });
+    });
+  }
+
   apply(theme);
 
   if (button) {
@@ -51,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
       apply(media.matches ? "dark" : "light");
     });
   }
-});
+})();
 
 document.addEventListener("DOMContentLoaded", function () {
   // The veil lives in the document from the first click onward and is
@@ -145,6 +185,13 @@ document.addEventListener("DOMContentLoaded", function () {
     veil.setAttribute("tabindex", "0");
     document.body.classList.add("lightbox-open");
 
+    // Focusable is not focused: the ring style.css draws on the plate
+    // hangs from :focus-visible, so opening moves the focus to the
+    // dialog itself as soon as it is open. A visitor who opened it with
+    // Enter, a tap or a swipe then has it in hand, and Escape closes it
+    // from there rather than from the thumbnail underneath.
+    veil.focus();
+
     // Carry the thumbnail's intrinsic ratio over to the plate so the
     // browser reserves the right box before the full image decodes.
     var tw = thumb.getAttribute("width");
@@ -222,11 +269,13 @@ document.addEventListener("DOMContentLoaded", function () {
 // Following a link to another page runs an exit beat first (see the
 // page-out keyframes in style.css), so the arrival animation on the
 // next page reads as one continuous move rather than a hard cut.
-// Only a plain left click or an Enter on a page link is taken over:
-// anything with a modifier key, a middle click, a mail: link, a link
-// that opens elsewhere or a link to this same document keeps its
+// Only a plain visit to a page link is taken over: a middle click, a
+// modifier-key click (a new tab, a copy of the address), a mail: link, a
+// link that opens elsewhere or a link to this same document keeps its
 // default behaviour, and under reduced motion nothing is taken over at
-// all — the jump is simply instant.
+// all — the jump is simply instant. Enter on a focused link arrives as a
+// click of its own, so it needs no keyboard handler of its own; Ctrl/Cmd
+// +Enter carries a modifier and stays with the browser.
 document.addEventListener("DOMContentLoaded", function () {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -269,15 +318,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (leaving) return;
       /* A middle click or a modifier-key click means the visitor wants
          the link itself (a new tab, a copy of the address), not the
-         tour, so it stays untouched. */
-      if (event.button !== 0) return;
+         tour, so it stays untouched. Enter on a focused link arrives as
+         a click of its own, but with button set to -1 rather than 0, so
+         only a real middle or right click is let through. */
+      if (event.button > 0) return;
       if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
-      event.preventDefault();
-      leave(link.href);
-    });
-
-    link.addEventListener("keydown", function (event) {
-      if (event.key !== "Enter") return;
       event.preventDefault();
       leave(link.href);
     });

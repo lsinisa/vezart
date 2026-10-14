@@ -27,17 +27,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
   <header>
-    <h1>Ana Vezmar</h1>
+    <h1><a href="index.html">Ana Vezmar</a></h1>
     <nav aria-label="Site menu">
       <div class="nav-links">
+        <a class="current" aria-current="page" href="index.html">Home</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
       </div>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode">Dark</button>
     </nav>
   </header>
-  <main class="gallery">
+  <main id="main" class="gallery">
     <figure class="work">
       <img src="images/thumbs/1.jpg" width="533" height="800" loading="eager" decoding="async"
            alt="Work 1 by Ana Vezmar">

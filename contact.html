@@ -21,18 +21,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
   <header>
-    <h1>Ana Vezmar</h1>
+    <h1><a href="index.html">Ana Vezmar</a></h1>
     <nav aria-label="Site menu">
       <div class="nav-links">
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
-        <a class="current" href="contact.html">Contact</a>
+        <a class="current" aria-current="page" href="contact.html">Contact</a>
       </div>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode">Dark</button>
     </nav>
   </header>
-  <main>
+  <main id="main">
     <h2>Contact</h2>
     <p>
       <a href="mailto:vezmaranci@gmail.com">vezmaranci@gmail.com</a>

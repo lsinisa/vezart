@@ -46,8 +46,31 @@
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* The palette above is only half the story: color-scheme tells the browser
+   which way to paint the things the page never draws itself — scrollbars,
+   form controls, the default canvas behind a not-yet-painted area. With
+   "light dark" on :root that choice follows the OS, so a visitor who flips
+   the toggle against their system setting gets a dark page wearing light
+   chrome (or the reverse). Each explicit choice restates the scheme so the
+   two halves move together; with no data-theme set, nothing overrides and
+   the OS preference still answers for both. */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* Dark palette — used when the OS asks for dark and the visitor has
-   not picked a mode with the header toggle. */
+   not picked a mode with the header toggle.
+
+   The same colours are written a second time further down, for the
+   toggle's explicit choice: a stylesheet has no way to name a set of
+   custom properties and apply it on demand, so one palette lives in
+   two places. Keep the two blocks in step — any value changed here
+   must be changed there too, or a visitor who picked dark by hand and
+   one whose phone did it for them would see two different darks. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #1a1816;
@@ -63,7 +86,9 @@
   }
 }
 
-/* An explicit choice from the toggle beats the OS preference. */
+/* An explicit choice from the toggle beats the OS preference — and
+   this is the second half of the dark palette above. Change one
+   colour here and you must change its twin there. */
 html[data-theme="dark"] {
   --paper: #1a1816;
   --ink: #f0ece4;
@@ -92,6 +117,51 @@ body {
 
 ::selection {
   background: var(--sel);
+}
+
+/* Skip link — the first thing in the document on every page, so a
+   keyboard visitor opens the tab order with the jump to the work rather
+   than with the bar. It is invisible until it takes focus: a line of
+   text drawn in the top-left corner would fight the wordmark for that
+   space, while a link that announces itself only when reached asks the
+   page for nothing at all. The 1px box with the words clipped out of it
+   keeps the link in the tab order and still read out by assistive tech,
+   which display: none would drop from both. */
+.skip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  /* Cut away entirely where rect() is understood; the box above is
+     already the fallback where it is not. */
+  clip-path: rect(0 0 0 0);
+  /* Kept to one line so the words are sliced sideways rather than
+     wrapping down the 1px edge into a visible column of letters. */
+  white-space: nowrap;
+}
+
+.skip:focus-visible {
+  /* Reached: pinned to the top-left of the viewport, above the sticky
+     bar (which sits at z-index 20) and below the veil (1000), so an
+     open plate is never overdrawn. The paper behind the words is what
+     keeps them legible over the bar they now sit on, and the ring is
+     the site's own focus outline — the jump announces itself the way
+     every other focusable thing on the page does. */
+  position: fixed;
+  top: calc(var(--fluid) * 0.5);
+  left: calc(var(--fluid) * 0.5);
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  z-index: 21;
+  color: var(--ink);
+  background: var(--paper);
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* The bar is sticky and frosted: it stays put while the grid scrolls
@@ -129,7 +199,7 @@ header h1 {
   font-size: clamp(1.45rem, 1.05rem + 1.5vw, 2rem);
   font-weight: 500;
   letter-spacing: 0.02em;
-  text-wrap: balanced;
+  text-wrap: balance;
   /* Tighter leading: the wordmark is a single line, and the inherited
      1.6 body leading only pads air above and below it — which is worst
      on a phone, where the header has to share a short viewport. */
@@ -519,8 +589,6 @@ main a:focus-visible {
   }
 }
 
-header,
-footer,
 main:not(.gallery) {
   animation: page-in 0.45s var(--ease) both;
 }
@@ -529,15 +597,9 @@ main:not(.gallery) {
   animation-delay: 0.12s;
 }
 
-footer {
-  animation-delay: 0.2s;
-}
-
 /* The exit beat. The delay is reset here because the arrival delays
    above would otherwise hold the exit open for a tenth of a second. */
-body.leaving header,
-body.leaving main,
-body.leaving footer {
+body.leaving main {
   animation: page-out var(--leave-beat) var(--ease) both;
   animation-delay: 0s;
 }
@@ -590,7 +652,7 @@ body.leaving footer {
   }
 }
 
-/* Wide screens: stop capping the measure at 58rem and hand the whole
+/* Wide screens: stop capping the measure at 46rem and hand the whole
    viewport to the grid, so auto-fill keeps adding columns as the
    window grows and the tracks always touch both edges. --cell grows
    with it, which is what keeps the thumbnails big rather than merely
@@ -686,9 +748,7 @@ body.leaving footer {
      document as leaving, so nothing waits for an exit beat. The main
      selector has to repeat the :not() guard from the arrival rule —
      dropping it would leave a weaker selector unable to override it. */
-  header,
-  main:not(.gallery),
-  footer {
+  main:not(.gallery) {
     animation: none;
   }
 
