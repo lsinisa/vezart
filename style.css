@@ -512,6 +512,14 @@ body.lightbox-open {
   overflow: hidden;
 }
 
+/* Hiding that scrollbar takes the bar away, and a scrollbar that is
+   taken away moves the page by its own width — the grid jumps sideways
+   the moment the plate opens. Reserving the gutter on the root claims
+   the space whether or not the bar is painted, so the layout stays put. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Text pages (About, Contact) */
 
 main:not(.gallery) {
@@ -647,6 +655,36 @@ main:not(.gallery) {
 body.leaving main {
   animation: page-out var(--leave-beat) var(--ease) both;
   animation-delay: 0s;
+}
+
+/* View transitions — where the browser can swap the two documents
+   natively, it does, and the rules above are not needed. The header and
+   footer keep their own names so they hold still while only the content
+   cross-fades; the arrival animation is switched off so it cannot stack
+   on top of the native swap. Everything above stays as the fallback for
+   browsers without the swap. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  header {
+    view-transition-name: site-header;
+  }
+
+  footer {
+    view-transition-name: site-footer;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+    animation-timing-function: var(--ease);
+  }
+}
+
+html.vt main:not(.gallery) {
+  animation: none;
 }
 
 /* Narrow screens: once there are only one or two tracks to choose

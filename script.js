@@ -135,6 +135,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function openLightbox(thumb) {
+    /* Whether the veil is already open when this call comes in. Paging
+       arrives with the plate still showing the previous work, and there
+       the veil must keep its open state so the move reads as one image
+       changing rather than the whole veil fading out and back in. */
+    var wasOpen = isOpen();
+
     if (!veil) {
       veil = document.createElement("div");
       veil.className = "lightbox";
@@ -199,7 +205,10 @@ document.addEventListener("DOMContentLoaded", function () {
     plate.setAttribute("width", tw || "1600");
     plate.setAttribute("height", th || "1600");
 
-    veil.classList.remove("open");
+    // The veil waits for the decode before it shows — but only when it
+    // is being opened. While it is already open, paging leaves the state
+    // alone so only the plate changes.
+    if (!wasOpen) veil.classList.remove("open");
 
     if (plate.complete) {
       reveal();
@@ -210,6 +219,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.querySelectorAll("main img").forEach(function (thumb) {
     thumb.setAttribute("tabindex", "0");
+    /* A thumbnail that takes focus and answers Enter or Space is a
+       button, not a picture; say so, since an img alone announces no
+       role for assistive tech to act on. */
+    thumb.setAttribute("role", "button");
 
     thumb.addEventListener("click", function () {
       if (isOpen()) closeLightbox(); else openLightbox(thumb);
@@ -217,6 +230,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     thumb.addEventListener("keydown", function (event) {
       if (event.key === "Enter" || event.key === " ") {
+        /* Space would otherwise scroll the page a beat before the
+           veil opens, so the gallery lurches as it opens. */
+        if (event.key === " ") event.preventDefault();
         if (isOpen()) closeLightbox(); else openLightbox(thumb);
       }
     });
@@ -278,6 +294,10 @@ document.addEventListener("DOMContentLoaded", function () {
 // +Enter carries a modifier and stays with the browser.
 document.addEventListener("DOMContentLoaded", function () {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  // Where the browser swaps the documents on its own (see the view
+  // transition rules in style.css), there is no exit beat to run.
+  if (document.documentElement.classList.contains("vt")) return;
 
   // The exit beat, read from the stylesheet so the wait and the
   // animation cannot drift apart.

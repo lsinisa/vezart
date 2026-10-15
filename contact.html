@@ -17,6 +17,7 @@
       t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     document.documentElement.dataset.theme = t;
   } catch (e) {}
+  if ("PageSwapEvent" in window) document.documentElement.classList.add("vt");
   </script>
   <link rel="stylesheet" href="style.css">
 </head>
