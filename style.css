@@ -560,6 +560,51 @@ main a:focus-visible {
   outline-offset: 3px;
 }
 
+/* Copy-email button (Contact) — the one control on the text pages that is
+   not a link. It borrows the nav button's pill so the two read as the same
+   control, and it keeps the site's ring rather than the browser's. The type
+   sits a step under the paragraph and the box is kept to one line of its
+   own height, so the button reads as a control beside the address rather
+   than a line of its own. */
+main button {
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: calc(var(--fluid) * 0.22) calc(var(--fluid) * 0.65);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+main button:hover,
+main button:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+main button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The line the button writes into (see the aria-live attributes in
+   contact.html). It is muted and a step under the text because it is a
+   note about an action, not part of the address; while it is empty it
+   takes no space, so the page still reads the same before a copy. */
+main .copy-status:empty {
+  display: none;
+}
+
+main .copy-status {
+  font-size: clamp(0.72rem, 0.66rem + 0.2vw, 0.8rem);
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
 /* Page traversal — the site moves as one gesture between pages.
    Arriving: the three blocks settle in from below, which is the
    gallery's stagger read at the page level (the grid itself brings its
@@ -679,6 +724,14 @@ body.leaving main {
   nav button {
     padding: calc(var(--fluid) * 0.5) calc(var(--fluid) * 0.95);
   }
+
+  main button {
+    /* The same reason the nav button gets more room: a tap target
+       should clear the text around it, and the button sits in running
+       text where a mistap lands on the address itself. */
+    font-size: 0.9em;
+    padding: calc(var(--fluid) * 0.35) calc(var(--fluid) * 0.75);
+  }
 }
 
 /* Narrow screens get their own pass over the header type. The fluid
@@ -732,6 +785,7 @@ body.leaving main {
   header,
   footer,
   main a,
+  main button,
   main.gallery img,
   main.gallery .work-caption,
   .lightbox,
@@ -759,5 +813,56 @@ body.leaving main {
 
   .lightbox img {
     transform: none;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────────── */
+
+/* Paper gets the page's words and nothing else: the nav bar and the theme
+   button only mean something on a screen, the palette and the shadows have
+   no meaning here, and a link's address — the one thing paper cannot
+   follow — is written out after the words that point at it. Only the text
+   pages get the addresses; on the gallery a link's address is the picture
+   the page already shows. The arrivals are switched off as they are under
+   reduced motion, so nothing that starts invisible can print invisible. */
+@media print {
+  nav,
+  .theme-toggle {
+    display: none;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  header,
+  footer {
+    background: transparent;
+    border: none;
+    color: black;
+  }
+
+  main a,
+  main button,
+  main .copy-status,
+  main.gallery .work-caption {
+    color: black;
+  }
+
+  main a {
+    text-decoration-color: black;
+  }
+
+  main:not(.gallery),
+  main.gallery figure {
+    animation: none;
+  }
+
+  /* Text pages only: an address is the one thing a reader needs from a
+     link once the page is on paper. The gallery is skipped because its
+     links point at the pictures the page already shows. */
+  main:not(.gallery) a::after {
+    content: " (" attr(href) ")";
   }
 }

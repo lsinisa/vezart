@@ -328,3 +328,95 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+// Copy email.
+// The Contact page gives the address as a mail: link, which is the right
+// thing for a click but not for a visitor who only wants the text of it to
+// paste somewhere else. The button beside the link hands that text to the
+// clipboard. Where the clipboard cannot be reached — no API, a permission
+// the browser refuses, or a page served over an origin the API will not
+// answer (a plain file:// open, an insecure host) — the address is left
+// selected on the page instead, which is what the visitor's own Ctrl+C
+// needs; and where even that copy fails, the selection is still what the
+// click was for. Every outcome says so in the open words, and the words
+// live in a polite live region (see the aria-live attributes on the empty
+// paragraph in contact.html), so assistive tech announces them without the
+// visitor asking again. Enter on the focused button arrives as a click of
+// its own, so no keyboard handler is needed here.
+document.addEventListener("DOMContentLoaded", function () {
+  var button = document.getElementById("copy-email");
+  var address = document.querySelector('main a[href^="mailto:"]');
+  var status = document.getElementById("copy-status");
+  if (!button || !address || !status) return;
+
+  var cleared = 0;
+
+  // The confirmation is a beat of information, not a permanent note: it
+  // is cleared once read, so the page does not keep claiming a copy that
+  // belongs to an earlier click. The handle is kept so a second click
+  // moves the deadline rather than leaving an earlier one to wipe the
+  // newer words out.
+  function say(words) {
+    status.textContent = words;
+    window.clearTimeout(cleared);
+    cleared = window.setTimeout(function () {
+      status.textContent = "";
+    }, 4000);
+  }
+
+  // The selection is left in place rather than cleared: a visitor whose
+  // clipboard refused still has the address picked out on the page, and
+  // one whose copy worked sees the same thing the clipboard took.
+  function selectAddress() {
+    if (typeof window.getSelection !== "function") return false;
+    var range = document.createRange();
+    range.selectNodeContents(address);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  }
+
+  // The legacy route: a selection the browser was told to copy. It is
+  // the only path that works where the clipboard API refuses, and it
+  // answers false rather than throwing when it cannot copy.
+  function copySelection() {
+    try {
+      return document.execCommand("copy") === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function selectInstead() {
+    if (!selectAddress()) {
+      say("Copy it by hand");
+      return;
+    }
+    if (copySelection()) {
+      say("Copied");
+      return;
+    }
+    say("Selected — copy it yourself");
+  }
+
+  button.addEventListener("click", function () {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      selectInstead();
+      return;
+    }
+    try {
+      navigator.clipboard.writeText(address.textContent.trim()).then(
+        function () {
+          say("Copied");
+        },
+        function () {
+          selectInstead();
+        }
+      );
+    } catch (e) {
+      selectInstead();
+    }
+  });
+});
+

@@ -10,7 +10,7 @@ index.html      the gallery — nine figures, each a thumbnail plus a caption
 about.html      text page
 contact.html    text page
 style.css       one stylesheet for all three pages
-script.js       one script: lightbox, paging, theme toggle
+script.js       one script: lightbox, paging, theme toggle, copy email
 images/         the nine full plates
 images/thumbs/  the nine thumbnails the pages actually load first
 ```
@@ -56,6 +56,11 @@ when the terminal is closed or with `Ctrl+C`; a public link needs a tunnel
   while `script.js` loads.
 - **Reduced motion.** The entrance stagger and the plate's scale-in are dropped
   when the visitor asks for it.
+- **Copy email.** On the Contact page, a button beside the address hands the
+  text of it to the clipboard — the mail: link is for a click, this is for a
+  paste somewhere else. Where the clipboard cannot be reached (no API, a
+  refused permission, an origin the API will not answer) the address is left
+  selected on the page instead, which is what the visitor's own Ctrl+C needs.
 
 ## Accessibility work
 
@@ -86,6 +91,18 @@ The veil as a dialog, in `script.js`:
   rather than leaving the visitor at the top of the page.
 - Space is suppressed while the plate is open, since it would otherwise
   scroll the page under the veil.
+
+The copy-email confirmation, in `contact.html` and `script.js`:
+
+- The line the button writes into carries `role="status"`, `aria-live="polite"`
+  and `aria-atomic="true"`, so the result is announced on its own and the whole
+  line is announced rather than a fragment of it.
+- Every outcome says what happened — `Copied`, `Selected — copy it yourself`,
+  `Copy it by hand` — and the words are cleared after four seconds, so the page
+  does not keep claiming a copy from an earlier click. While it is empty the
+  line takes no space, so the page reads the same before anything is copied.
+- The button is a real `<button>`, so Enter arrives as a click of its own and
+  `style.css` gives it the same focus ring as every other control on the site.
 
 `index.html` also gained Open Graph and canonical tags. Their URLs still use
 the `EXAMPLE.com` placeholder — they need the real domain before the page is
