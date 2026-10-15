@@ -180,8 +180,20 @@ header {
   gap: calc(var(--fluid) * 0.75) calc(var(--fluid) * 1.5);
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
-  padding: calc(var(--fluid) * 1.15) 0 calc(var(--fluid) * 1.15);
-  margin: 0 0 calc(var(--fluid) * 1.75);
+  /* Full-bleed: the bar is the page's own edge, not a card that stops at
+     the measure. The grid's outer tracks already reach that measure, and
+     a hovered cell leans a few pixels past it — so a bar painted only to
+     the column read as a plate the artwork was poking out of. The negative
+     margin takes the box out to the viewport and the matching padding
+     brings the content back to the measure it had, so the wordmark and the
+     buttons stay exactly where they were drawn and only the paint grows.
+     Percentages here resolve against the body's content box, so 50% is
+     half the measure and 50vw half the viewport: their difference is
+     exactly the inset on each side, which is why the two rules are one
+     another mirrored, and why they stay right when the measure or the
+     body's own padding changes further down. */
+  margin: 0 calc(50% - 50vw) calc(var(--fluid) * 1.75);
+  padding: calc(var(--fluid) * 1.15) calc(50vw - 50%);
   transition: color 0.35s var(--ease), background-color 0.35s var(--ease), border-color 0.35s var(--ease);
 }
 
@@ -727,7 +739,10 @@ html.vt main:not(.gallery) {
 
   header {
     padding-bottom: calc(var(--fluid) * 0.8);
-    margin: 0 0 calc(var(--fluid) * 1.1);
+    /* Only the vertical rhythm trades here — the horizontal breakout
+       above has to survive, or the bar would shrink back to the measure
+       on a short viewport. */
+    margin: 0 calc(50% - 50vw) calc(var(--fluid) * 1.1);
   }
 
   main.gallery {
