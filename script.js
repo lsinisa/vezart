@@ -472,3 +472,18 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+// Footer year — the page stamps its own year from the clock rather than
+// the one it was written in, so the copyright line never claims a year
+// that has already passed.
+document.addEventListener("DOMContentLoaded", function () {
+  var line = document.querySelector("footer p");
+  if (!line) return;
+  var year = String(new Date().getFullYear());
+  for (var i = 0; i < line.childNodes.length; i++) {
+    var node = line.childNodes[i];
+    if (node.nodeType === 3 && /\b20\d\d\b/.test(node.nodeValue)) {
+      node.nodeValue = node.nodeValue.replace(/\b20\d\d\b/, year);
+    }
+  }
+});
+
