@@ -114,12 +114,19 @@ with WebP support load WebP thumbnails (~26% lighter than the JPEGs), and
 everything else keeps the JPEG fallback. The open veil names itself with a
 caption of its own under the plate, which also says the work's place in the
 nine, and paging preloads the neighbouring plates so the moves arrive
-already decoded.
+already decoded. The footer year comes from the clock at load time rather
+than a hardcoded number.
+
+Measured, not computed (31 Oct 2026, Edge 156 via its CDP endpoint, live
+Pages): 39 text samples across the three pages, lowest contrast 6.41:1 on
+the index and 5.7:1 on About/Contact — all clear AA at their real rendered
+sizes; all nine thumbnails carry `alt`; no negative tab-stops, duplicate
+ids or dangling `aria-labelledby` refs. The W3C validator reports zero
+errors on all four pages (the favicon's data URI needed percent-encoding
+to get there).
 
 ## Still open
 
 - The About and Contact copy remains placeholder text waiting for the artist.
-- No browser accessibility validation has been run; the contrast and focus
-  figures above are computed, not measured.
 - A custom domain would replace the GitHub Pages address when it arrives.
 
