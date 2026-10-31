@@ -105,13 +105,31 @@ document.addEventListener("DOMContentLoaded", function () {
   // it, and paging keeps it pointed at the work on the veil.
   var opener = null;
 
+  // The caption line that rides under the plate, made with the veil.
+  var capEl = null;
+
   // Where a touch swipe across the veil began, if one is in flight.
   var swipeStart = null;
 
   // Thumbnails live in images/thumbs/, the full plates one level up.
-  function fullSource(thumb) {
-    var src = thumb.getAttribute("src") || thumb.src;
-    return src.replace("thumbs/", "");
+  function fullSource(img) {
+    var src = img.getAttribute("src") || img.src;
+    return src.replace("images/thumbs/", "images/");
+  }
+
+  // The neighbouring plates, kept as Image objects the moment a work
+  // opens so the next paging move has a decoded picture to take rather
+  // than fetching a half-megabyte plate under the veil.
+  var preloaded = {};
+
+  function preloadNeighbours(works, at) {
+    for (var d = -1; d <= 1; d += 2) {
+      var j = (at + d + works.length) % works.length;
+      if (preloaded[j]) continue;
+      var image = new Image();
+      image.src = fullSource(works[j].querySelector("img"));
+      preloaded[j] = image;
+    }
   }
 
   function isOpen() {
@@ -146,15 +164,20 @@ document.addEventListener("DOMContentLoaded", function () {
       veil.className = "lightbox";
       plate = document.createElement("img");
       veil.appendChild(plate);
+      capEl = document.createElement("p");
+      capEl.className = "plate-caption";
+      capEl.setAttribute("id", "plate-caption");
+      veil.appendChild(capEl);
       veil.addEventListener("click", closeLightbox);
       document.body.appendChild(veil);
 
       // Modal semantics — the veil is a dialog the moment a work
-      // opens it, named by the work's caption, and hidden from
-      // assistive tech while closed.
+      // opens it, named from its first breath by the caption line
+      // under the plate, and hidden from assistive tech while closed.
       veil.setAttribute("role", "dialog");
       veil.setAttribute("aria-modal", "true");
       veil.setAttribute("aria-hidden", "true");
+      veil.setAttribute("aria-labelledby", "plate-caption");
 
       // The listeners live on the plate once, so they fire again when a
       // later viewing points it at a different work.
@@ -179,14 +202,30 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    plate.alt = thumb.alt;
-    plate.src = fullSource(thumb);
+    /* The plate takes the look of the thumbnail's own image: its alt
+       carries over, and the full source sits one level above the
+       thumb. The thumbnail is now a button wrapping a picture, so the
+       attributes live on the image inside it. */
+    var img = thumb.querySelector("img");
+    plate.alt = img.alt;
+    plate.src = fullSource(img);
     opener = thumb;
 
-    // The dialog is named by the work's caption, and while open it is
-    // focusable and visible to assistive tech.
-    veil.setAttribute("aria-label",
-      thumb.closest("figure").querySelector("figcaption").textContent);
+    // The gallery's buttons, in order: the index of the opening work
+    // names its place under the plate and tells the pager which
+    // neighbours to cache.
+    var works = document.querySelectorAll("main .thumb");
+    var at = 0;
+    for (var i = 0; i < works.length; i++) {
+      if (works[i] === thumb) { at = i; break; }
+    }
+
+    /* The veil speaks with its own words: the caption under the plate
+       is the dialog's name and carries the work's place in the set, so
+       a screen reader hears the same line the eye reads. */
+    var cap = thumb.closest("figure").querySelector("figcaption");
+    capEl.textContent = cap.textContent + " \u00b7 work " + (at + 1) + " of " + works.length;
+
     veil.removeAttribute("aria-hidden");
     veil.setAttribute("tabindex", "0");
     document.body.classList.add("lightbox-open");
@@ -200,8 +239,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Carry the thumbnail's intrinsic ratio over to the plate so the
     // browser reserves the right box before the full image decodes.
-    var tw = thumb.getAttribute("width");
-    var th = thumb.getAttribute("height");
+    var tw = img.getAttribute("width");
+    var th = img.getAttribute("height");
     plate.setAttribute("width", tw || "1600");
     plate.setAttribute("height", th || "1600");
 
@@ -210,6 +249,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // alone so only the plate changes.
     if (!wasOpen) veil.classList.remove("open");
 
+    // Cache the two plates this one can page to, so the next move
+    // arrives already decoded.
+    preloadNeighbours(works, at);
+
     if (plate.complete) {
       reveal();
     }
@@ -217,31 +260,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // decoded, so the veil never shows a blank box.
   }
 
-  document.querySelectorAll("main img").forEach(function (thumb) {
-    thumb.setAttribute("tabindex", "0");
-    /* A thumbnail that takes focus and answers Enter or Space is a
-       button, not a picture; say so, since an img alone announces no
-       role for assistive tech to act on. */
-    thumb.setAttribute("role", "button");
-
+  /* Thumbnails are native <button>s in the markup: focus, Enter, and
+     Space arrive without any help from here — a button whose only text
+     is an image takes its name from that image's alt. */
+  document.querySelectorAll("main .thumb").forEach(function (thumb) {
     thumb.addEventListener("click", function () {
-      if (isOpen()) closeLightbox(); else openLightbox(thumb);
-    });
-
-    thumb.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" || event.key === " ") {
-        /* Space would otherwise scroll the page a beat before the
-           veil opens, so the gallery lurches as it opens. */
-        if (event.key === " ") event.preventDefault();
-        if (isOpen()) closeLightbox(); else openLightbox(thumb);
-      }
+      if (isOpen()) closeLightbox();
+      else openLightbox(thumb);
     });
   });
 
   // Paging — the plate moves to the neighbouring work in grid order,
   // wrapping at the ends.
   function stepPlate(delta) {
-    var works = document.querySelectorAll("main img");
+    var works = document.querySelectorAll("main .thumb");
     var at = 0;
     for (var i = 0; i < works.length; i++) {
       if (works[i] === opener) at = i;

@@ -104,14 +104,22 @@ The copy-email confirmation, in `contact.html` and `script.js`:
 - The button is a real `<button>`, so Enter arrives as a click of its own and
   `style.css` gives it the same focus ring as every other control on the site.
 
-`index.html` also gained Open Graph and canonical tags. Their URLs still use
-the `EXAMPLE.com` placeholder — they need the real domain before the page is
-shared anywhere.
+`index.html` also gained Open Graph and canonical tags, now pointed at the
+GitHub Pages address (`https://lsinisa.github.io/vezart/`); `robots.txt` and
+`sitemap.xml` agree, and a `.nojekyll` file at the root keeps Pages serving
+the plain files rather than filtering them through Jekyll.
+
+Thumbnails are native `<button>`s wrapping a `<picture>` element: browsers
+with WebP support load WebP thumbnails (~26% lighter than the JPEGs), and
+everything else keeps the JPEG fallback. The open veil names itself with a
+caption of its own under the plate, which also says the work's place in the
+nine, and paging preloads the neighbouring plates so the moves arrive
+already decoded.
 
 ## Still open
 
-- Replace the `EXAMPLE.com` placeholder in the OG and canonical tags.
+- The About and Contact copy remains placeholder text waiting for the artist.
 - No browser accessibility validation has been run; the contrast and focus
   figures above are computed, not measured.
-- No public host or tunnel is set up yet.
+- A custom domain would replace the GitHub Pages address when it arrives.
 
