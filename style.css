@@ -437,17 +437,30 @@ main.gallery img {
   cursor: pointer;
   border-radius: 3px;
   box-shadow: var(--shadow);
-  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), filter 0.3s ease;
+  /* The hover grows the box itself, not a composited copy: a transform
+     animation runs on a raster the browser makes once at display
+     resolution and stretches mid-flight, which read as the artwork
+     blurring up and snapping back sharp at the end. Layout grows
+     re-rasterize from the source at every frame — one hovered cell at
+     a time, so the cost is free here and the move never blurs. */
+  position: relative;
+  transition: width 0.3s var(--ease), top 0.3s var(--ease), box-shadow 0.3s var(--ease), filter 0.3s ease;
 }
 
 /* Hover-only polish — gated behind (hover: hover) so touch devices
    never get a stuck hover state left over from a tap. */
 @media (hover: hover) {
   main.gallery img:hover {
-    /* A lift rather than a swell: the cell comes off the page (the
-       deeper shadow below does the weight) and barely changes size, so
-       the artwork is never resampled into a blurrier version of itself. */
-    transform: translateY(-3px) scale(1.015);
+    /* A lift rather than a swell of pixels: the cell comes off the page
+       (the deeper shadow below does the weight) and grows through its
+       layout box — width + top, never transform — so the browser
+       re-decodes the artwork at each frame's size instead of stretching
+       a pre-rasterised copy. The growth is under the grid's gutter, so
+       a hovered cell never leans over its neighbours. */
+    width: 101.2%;
+    margin: 0 auto;
+    top: -3px;
+    z-index: 1;
     box-shadow: var(--shadow-hi);
     filter: saturate(1.05) contrast(1.03);
   }
@@ -889,7 +902,9 @@ html.vt main:not(.gallery) {
   }
 
   main.gallery img:hover {
-    transform: none;
+    width: 100%;
+    margin: 0 auto;
+    top: auto;
     filter: none;
   }
 
