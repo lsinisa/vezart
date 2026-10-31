@@ -268,17 +268,24 @@ document.addEventListener("DOMContentLoaded", function () {
       if (isOpen()) closeLightbox();
       else openLightbox(thumb);
     });
-
-    /* The button carries the image's own ratio so its box is nailed
-       even when the image itself is not what sets its height. The
-       hover then grows the image past the box and the grid holds
-       still: without the pin the taller image stretches its row and
-       the whole next line of works slides down for a beat. */
-    var face = thumb.querySelector("img");
-    var w = parseInt(face.getAttribute("width"), 10);
-    var h = parseInt(face.getAttribute("height"), 10);
-    if (w && h) thumb.style.aspectRatio = w + " / " + h;
   });
+
+  /* The hover grows the thumbnail image a hair past its box to lift it.
+     A button's box is content-sized, so a taller grown image would
+     stretch its own cell and shove the next row down for a beat —
+     exactly the slide the reader noticed. Nail every button to the
+     height its image has at rest (the inline aspect-ratio in the
+     markup pins the ratio; this pins the pixels) and the grid stays
+     welded: the grown image only overflows its own box. Measured
+     heights follow the viewport, so the pins are re-cut on resize. */
+  function pinThumbBoxes() {
+    document.querySelectorAll("main .thumb").forEach(function (thumb) {
+      var face = thumb.querySelector("img");
+      if (face) thumb.style.height = face.getBoundingClientRect().height + "px";
+    });
+  }
+  pinThumbBoxes();
+  window.addEventListener("resize", pinThumbBoxes);
 
   // Paging — the plate moves to the neighbouring work in grid order,
   // wrapping at the ends.

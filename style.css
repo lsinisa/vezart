@@ -402,6 +402,11 @@ main.gallery {
 main.gallery figure {
   margin: 0;
   min-width: 0;
+  /* A grid item's automatic minimum size would let a hovered, grown
+     image stretch its own cell and shove the row below down; the
+     thumb button carries the image's aspect-ratio, so the cell may
+     shrink its minimum to the box itself. */
+  min-height: 0;
   /* Entrance: each cell rises a little and settles, staggered by its
      position in the grid (--i is stamped onto it by script.js). The
      delay is capped so a longer grid never waits more than half a
@@ -455,8 +460,10 @@ main.gallery img {
        (the deeper shadow below does the weight) and grows through its
        layout box — width + top, never transform — so the browser
        re-decodes the artwork at each frame's size instead of stretching
-       a pre-rasterised copy. The growth is under the grid's gutter, so
-       a hovered cell never leans over its neighbours. */
+       a pre-rasterised copy. Each thumb button carries its image's own
+       aspect-ratio in the markup, which nails the cell's box: the grown
+       image overflows that box without stretching the row, so
+       neighbouring works never budge. The growth is under the gutter. */
     width: 101.2%;
     margin: 0 auto;
     top: -3px;
