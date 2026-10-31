@@ -402,9 +402,9 @@ main.gallery {
 main.gallery figure {
   margin: 0;
   min-width: 0;
-  /* A grid item's automatic minimum size would let a hovered, grown
-     image stretch its own cell and shove the row below down; the
-     thumb button carries the image's aspect-ratio, so the cell may
+  /* A grid item's automatic minimum size would let any grown content
+     stretch its own cell and shove the row below down; the thumb
+     button carries the image's aspect-ratio, so the cell may
      shrink its minimum to the box itself. */
   min-height: 0;
   /* Entrance: each cell rises a little and settles, staggered by its
@@ -442,31 +442,30 @@ main.gallery img {
   cursor: pointer;
   border-radius: 3px;
   box-shadow: var(--shadow);
-  /* The hover grows the box itself, not a composited copy: a transform
-     animation runs on a raster the browser makes once at display
-     resolution and stretches mid-flight, which read as the artwork
-     blurring up and snapping back sharp at the end. Layout grows
-     re-rasterize from the source at every frame — one hovered cell at
-     a time, so the cost is free here and the move never blurs. */
+  /* Neither pure path survives zoom: growing the layout box re-rasterizes
+     every frame, and while the page is pinch-zoomed the source raster is
+     already at display size, so those re-rasters come from the browser's
+     lower-resolution mip levels — a visible low-res flash mid-animation.
+     A composited scale never re-rasterizes: it resamples the existing
+     raster, and since the sources carry ~1.8x more pixels than the cell
+     shows, even a zoomed-in page keeps that raster over-supplied while
+     the growth runs — no flash, no blur. The cell box itself stays
+     pinned (aspect-ratio), so the enlarged copy only ever overflows
+     into the gutter and the grid never shifts. */
   position: relative;
-  transition: width 0.3s var(--ease), top 0.3s var(--ease), box-shadow 0.3s var(--ease), filter 0.3s ease;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), filter 0.3s ease;
 }
 
 /* Hover-only polish — gated behind (hover: hover) so touch devices
    never get a stuck hover state left over from a tap. */
 @media (hover: hover) {
   main.gallery img:hover {
-    /* A lift rather than a swell of pixels: the cell comes off the page
-       (the deeper shadow below does the weight) and grows through its
-       layout box — width + top, never transform — so the browser
-       re-decodes the artwork at each frame's size instead of stretching
-       a pre-rasterised copy. Each thumb button carries its image's own
-       aspect-ratio in the markup, which nails the cell's box: the grown
-       image overflows that box without stretching the row, so
-       neighbouring works never budge. The growth is under the gutter. */
-    width: 101.2%;
-    margin: 0 auto;
-    top: -3px;
+    /* Composited scale — see the base rule's comment: re-rasterizing
+       (width growth) flashes low-res once the page is zoomed, a scale
+       resamples the over-supplied raster and cannot. transform-origin
+       center keeps the copy centered; z-index lifts it over resting
+       siblings. */
+    transform: translate(0, -3px) scale(1.012);
     z-index: 1;
     box-shadow: var(--shadow-hi);
     filter: saturate(1.05) contrast(1.03);
@@ -909,9 +908,7 @@ html.vt main:not(.gallery) {
   }
 
   main.gallery img:hover {
-    width: 100%;
-    margin: 0 auto;
-    top: auto;
+    transform: none;
     filter: none;
   }
 
