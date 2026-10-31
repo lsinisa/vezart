@@ -6,3 +6,9 @@ desktop.ini
 # Local dev / editor artifacts
 .vscode/
 *.tmp
+
+# Probe/validation scratch (PSI, W3C checker, Lighthouse output)
+psi*.json
+v-*.html
+*.v.html
+lh-*
