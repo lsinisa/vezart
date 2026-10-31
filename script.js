@@ -268,6 +268,16 @@ document.addEventListener("DOMContentLoaded", function () {
       if (isOpen()) closeLightbox();
       else openLightbox(thumb);
     });
+
+    /* The button carries the image's own ratio so its box is nailed
+       even when the image itself is not what sets its height. The
+       hover then grows the image past the box and the grid holds
+       still: without the pin the taller image stretches its row and
+       the whole next line of works slides down for a beat. */
+    var face = thumb.querySelector("img");
+    var w = parseInt(face.getAttribute("width"), 10);
+    var h = parseInt(face.getAttribute("height"), 10);
+    if (w && h) thumb.style.aspectRatio = w + " / " + h;
   });
 
   // Paging — the plate moves to the neighbouring work in grid order,
